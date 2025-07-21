@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미국 간호사 커리어 종합 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a single-page dashboard, flowing from a high-level summary to detailed, interactive comparisons, and finally to contextual analysis. This structure was chosen to cater to different user needs: 1) Quick Overview: Key metric cards at the top provide instant insights for users who want a fast summary. 2) Interactive Exploration: The central "Comparison by Degree" section with toggleable charts (Salary vs. Growth) allows users to actively explore the data that matters most to them, making it more engaging than a static report. 3) Contextual Understanding: The subsequent sections on the APRN deep dive and comparison to all US jobs provide the 'why' behind the numbers, giving a fuller picture. This top-down, interactive approach is more intuitive and user-friendly for understanding complex career data than a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Key Metrics (Highest Salary/Growth): Goal: Inform -> Presentation: Large-text "Stat Cards" using HTML/Tailwind -> Interaction: None -> Justification: Provides immediate, high-impact takeaways.
+        - Salary & Growth by Degree: Goal: Compare -> Presentation: Vertical Bar Chart -> Interaction: Toggle buttons to switch data between salary and growth; hover tooltips for details -> Justification: Bar charts are ideal for direct comparison across discrete categories (degree levels). The toggle makes the space efficient and user-controlled. -> Library: Chart.js/Canvas.
+        - Detailed Role Info: Goal: Inform/Explain -> Presentation: Thematic text blocks with headings -> Interaction: None (statically displayed in sections) -> Justification: Provides necessary qualitative context to the quantitative charts.
+        - Nursing vs. US Average Growth: Goal: Contextualize -> Presentation: Horizontal Bar Chart -> Interaction: Hover tooltips -> Justification: A horizontal bar chart effectively contrasts the growth rates against a single benchmark (the US average), highlighting the significance of the nursing field's growth. -> Library: Chart.js/Canvas.
+        - APRN Specialties: Goal: Organize -> Presentation: Styled HTML/CSS cards with Unicode icons (e.g., 🩺) -> Interaction: None -> Justification: Simple visual grouping of related roles without the need for complex diagrams, keeping the design clean and lightweight. -> Library: HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 450px;
+            }
+        }
+        .kpi-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+        }
+        .btn-active {
+            background-color: #0d9488;
+            color: white;
+        }
+        .btn-inactive {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        .gemini-modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .gemini-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #0d9488;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-700">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-800 mb-2">미국 간호사 커리어 종합 분석</h1>
+            <p class="text-lg text-slate-600">학위, 연봉, 전망 및 박사 과정 심층 분석</p>
+        </header>
+
+        <section id="overview" class="mb-16">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-8">주요 지표 요약</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="kpi-card">
+                    <p class="text-slate-500 text-lg">가장 높은 연봉 중간값</p>
+                    <p class="text-4xl font-bold text-teal-600 my-2">$128,490</p>
+                    <p class="text-slate-500">전문 간호사 (석사 이상)</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-slate-500 text-lg">가장 빠른 성장 전망</p>
+                    <p class="text-4xl font-bold text-amber-600 my-2">+38%</p>
+                    <p class="text-slate-500">전문 간호사 (2022-2032)</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="text-slate-500 text-lg">미국 전체 직업 평균 성장률</p>
+                    <p class="text-4xl font-bold text-slate-600 my-2">+3%</p>
+                    <p class="text-slate-500">모든 직업 (2022-2032)</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-16 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-slate-800">학위별 커리어 비교</h2>
+                <p class="mt-2 text-slate-600 max-w-3xl mx-auto">
+                    이 섹션에서는 간호사의 학위 수준에 따른 연봉과 직업 성장률을 비교 분석합니다. 아래 버튼을 사용하여 보고 싶은 데이터를 차트에서 확인해보세요.
+                </p>
+            </div>
+            <div class="flex justify-center mb-6 space-x-2">
+                <button id="showSalaryBtn" class="px-6 py-2 rounded-full font-semibold transition-colors duration-200 btn-active">연봉 비교</button>
+                <button id="showGrowthBtn" class="px-6 py-2 rounded-full font-semibold transition-colors duration-200 btn-inactive">성장률 전망</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainComparisonChart"></canvas>
+            </div>
+        </section>
+
+        <section id="details" class="mb-16">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-8">간호사 직책별 자격 및 역할</h2>
+             <p class="mt-2 mb-10 text-center text-slate-600 max-w-3xl mx-auto">
+                각 간호사 직책은 고유한 자격 요건과 역할을 가집니다. 학위가 높아질수록 자율성과 전문성이 증대되며, 이는 커리어 경로에 직접적인 영향을 미칩니다.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="font-bold text-xl text-teal-700 mb-2">실무 간호사 (LPN/LVN)</h3>
+                    <p class="text-slate-600 flex-grow">등록 간호사(RN)나 의사의 감독 하에 기본적인 간호 업무를 수행합니다. 주요 업무에는 활력 징후 측정, 기본적인 약물 투여, 상처 드레싱 교체, 카테터 삽입, 환자의 개인 위생 및 편안함 제공, 환자 및 가족과의 건강 상담, 그리고 환자 상태를 상급 의료진에게 보고하는 역할이 포함됩니다. 주로 요양원, 장기 요양 시설 등에서 근무하며 안정적인 환자들의 일상적인 케어를 담당합니다.</p>
+                     <div class="mt-4 pt-4 border-t border-slate-200">
+                        <p><strong class="text-slate-800">요구 학위:</strong> 자격증 과정 (약 1-2년)</p>
+                        <p><strong class="text-slate-800">필수 시험:</strong> NCLEX-PN</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="font-bold text-xl text-teal-700 mb-2">등록 간호사 (RN)</h3>
+                    <p class="text-slate-600 flex-grow">환자의 건강 상태를 종합적으로 평가하고, 개별화된 간호 계획을 수립 및 실행하는 의료팀의 핵심입니다. 의사의 처방에 따른 약물 및 치료를 시행하고, 정맥 주사 라인을 관리하며, 첨단 의료 장비를 운영 및 모니터링합니다. 또한, 진단 검사를 수행하고 결과를 분석하며, 환자와 그 가족에게 질병, 치료 과정, 건강 관리 방법에 대해 교육하는 중요한 역할을 합니다. 다른 의료 전문가들과 긴밀히 협력하여 환자에게 최적의 치료를 제공합니다.</p>
+                     <div class="mt-4 pt-4 border-t border-slate-200">
+                        <p><strong class="text-slate-800">요구 학위:</strong> 학사(BSN) 또는 준학사(ADN)</p>
+                        <p><strong class="text-slate-800">필수 시험:</strong> NCLEX-RN</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
+                    <h3 class="font-bold text-xl text-teal-700 mb-2">전문 간호사 (APRN)</h3>
+                    <p class="text-slate-600 flex-grow">의사와 유사한 수준의 높은 자율성을 가지고 독립적인 의료 서비스를 제공합니다. 환자를 진단하고, 약물을 처방하며, 치료 계획을 수립하고 관리합니다. 전문 분야에 따라 가정의학과, 정신건강, 소아과 등 특정 환자군을 대상으로 1차 의료를 제공하거나(NP), 수술 중 마취를 전담하고(CRNA), 여성의 생애주기 건강과 분만을 관리하는(CNM) 등 고도로 전문화된 역할을 수행합니다.</p>
+                    <div class="mt-4 pt-4 border-t border-slate-200">
+                        <p><strong class="text-slate-800">요구 학위:</strong> 석사(MSN)</p>
+                        <p><strong class="text-slate-800">필수 시험:</strong> 국가 전문 분야별 자격시험</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="salary-by-state" class="mb-16">
+            <h2 class="text-3xl font-bold text-center text-slate-800 mb-8">직책별 상위 연봉 주(State) 정보</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-xl text-teal-700 mb-4">실무 간호사 (LPN/LVN)</h3>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between"><span>워싱턴</span> <span class="font-semibold">$75,810</span></li>
+                        <li class="flex justify-between"><span>캘리포니아</span> <span class="font-semibold">$75,340</span></li>
+                        <li class="flex justify-between"><span>매사추세츠</span> <span class="font-semibold">$72,790</span></li>
+                        <li class="flex justify-between"><span>로드아일랜드</span> <span class="font-semibold">$71,150</span></li>
+                        <li class="flex justify-between"><span>알래스카</span> <span class="font-semibold">$70,890</span></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-xl text-teal-700 mb-4">등록 간호사 (RN)</h3>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between"><span>캘리포니아</span> <span class="font-semibold">$138,620</span></li>
+                        <li class="flex justify-between"><span>하와이</span> <span class="font-semibold">$129,560</span></li>
+                        <li class="flex justify-between"><span>오리건</span> <span class="font-semibold">$119,710</span></li>
+                        <li class="flex justify-between"><span>워싱턴</span> <span class="font-semibold">$115,900</span></li>
+                        <li class="flex justify-between"><span>알래스카</span> <span class="font-semibold">$114,860</span></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-xl text-teal-700 mb-4">전문 간호사 (NP)</h3>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between"><span>캘리포니아</span> <span class="font-semibold">$161,540</span></li>
+                        <li class="flex justify-between"><span>뉴저지</span> <span class="font-semibold">$145,030</span></li>
+                        <li class="flex justify-between"><span>매사추세츠</span> <span class="font-semibold">$142,930</span></li>
+                        <li class="flex justify-between"><span>오리건</span> <span class="font-semibold">$141,120</span></li>
+                        <li class="flex justify-between"><span>네바다</span> <span class="font-semibold">$138,790</span></li>
+                    </ul>
+                </div>
+            </div>
+            <p class="text-center text-xs text-slate-500 mt-4">* 데이터 출처: 미국 노동통계청(BLS), 2023년 5월 기준 연평균 급여(Annual Mean Wage).</p>
+        </section>
+        
+        <section id="gemini-planner" class="mb-16 bg-teal-50 p-6 md:p-8 rounded-xl shadow-lg text-center">
+            <h2 class="text-3xl font-bold text-teal-800">✨ AI 기반 커리어 경로 설계</h2>
+            <p class="mt-2 mb-6 text-teal-700 max-w-3xl mx-auto">
+                당신의 현재 위치와 미래의 목표를 선택하세요. Gemini AI가 당신만을 위한 맞춤형 커리어 성장 계획을 제안해 드립니다.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center max-w-4xl mx-auto">
+                <div class="w-full">
+                    <label for="currentRole" class="block text-sm font-medium text-slate-700 mb-1">현재 학위/경력</label>
+                    <select id="currentRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                        <option value="고등학생">고등학생</option>
+                        <option value="실무 간호사 (LPN)">실무 간호사 (LPN)</option>
+                        <option value="등록 간호사 (ADN)">등록 간호사 (ADN)</option>
+                        <option value="등록 간호사 (BSN)">등록 간호사 (BSN)</option>
+                        <option value="전문 간호사 (MSN)">전문 간호사 (MSN)</option>
+                    </select>
+                </div>
+                <div class="w-full">
+                    <label for="goalRole" class="block text-sm font-medium text-slate-700 mb-1">목표 직책</label>
+                    <select id="goalRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                        <option value="등록 간호사 (RN)">등록 간호사 (RN)</option>
+                        <option value="전문 간호사 (APRN)">전문 간호사 (APRN)</option>
+                        <option value="실무 간호학 박사 (DNP)">실무 간호학 박사 (DNP)</option>
+                        <option value="최고 간호 책임자 (CNO)">최고 간호 책임자 (CNO)</option>
+                        <option value="간호학 철학 박사 (PhD)">간호학 철학 박사 (PhD)</option>
+                    </select>
+                </div>
+                <div class="w-full mt-4 md:mt-0">
+                    <button id="generatePlanBtn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors duration-300 shadow-md">
+                        ✨ AI 커리어 플랜 생성
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="doctoral-deep-dive" class="mb-16 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-slate-800">간호학 박사 심층 분석: DNP vs. PhD</h2>
+                <p class="mt-2 text-slate-600 max-w-4xl mx-auto">
+                    간호학 박사 학위는 간호계의 최고 리더를 양성하며, 실무 중심의 DNP와 연구 중심의 PhD로 나뉩니다. 두 경로는 서로 다른 목표를 가지지만, 의료 시스템 발전을 위해 상호 보완적인 역할을 수행합니다.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="text-2xl font-bold text-teal-700 mb-4">실무 간호학 박사 (DNP)</h3>
+                    <p class="mb-4 text-slate-600"><strong>핵심:</strong> 최신 연구 결과를 임상 현장에 적용하여 환자 치료 결과와 의료 시스템의 효율성을 개선하는 **실무 혁신 리더**입니다.</p>
+                    <h4 class="font-semibold text-slate-800 mb-2">주요 경력 경로:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><strong>최고 간호 책임자 (CNO):</strong> 병원 간호부 전체를 총괄하는 경영자</li>
+                        <li><strong>품질 개선 책임자:</strong> 데이터 기반으로 환자 안전 및 의료 질 향상 주도</li>
+                        <li><strong>임상 정보 책임자 (CNIO):</strong> 의료 정보 기술 도입 및 최적화</li>
+                        <li><strong>보건 정책 전문가:</strong> 근거 기반 보건 정책 개발 및 자문</li>
+                    </ul>
+                </div>
+                <div class="border border-slate-200 rounded-lg p-6">
+                    <h3 class="text-2xl font-bold text-amber-700 mb-4">간호학 철학 박사 (PhD)</h3>
+                    <p class="mb-4 text-slate-600"><strong>핵심:</strong> 독창적인 과학적 연구를 통해 간호학의 새로운 지식과 이론을 창출하는 **학술 및 연구 리더**입니다.</p>
+                    <h4 class="font-semibold text-slate-800 mb-2">주요 경력 경로:</h4>
+                    <ul class="list-disc list-inside space-y-1 text-slate-600">
+                        <li><strong>대학 교수:</strong> 미래 간호 인력 및 연구자 양성</li>
+                        <li><strong>간호 과학자:</strong> 대규모 연구 프로젝트를 이끌며 새로운 지식 창출</li>
+                        <li><strong>연구 책임자 (PI):</strong> 정부 및 민간 연구 과제 총괄</li>
+                        <li><strong>이론가 및 컨설턴트:</strong> 새로운 간호 이론 개발 및 전문 자문</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="context" class="mb-16 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+             <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-slate-800">전체 직업 시장과의 비교</h2>
+                <p class="mt-2 text-slate-600 max-w-3xl mx-auto">
+                    간호 직업의 성장률이 미국 전체 평균과 비교하여 얼마나 높은지 시각적으로 보여줍니다. 특히 전문 간호사의 성장률은 전체 평균을 크게 상회하며, 헬스케어 산업의 중요성을 명확히 나타냅니다.
+                </p>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="nationalComparisonChart"></canvas>
+            </div>
+        </section>
+
+        <footer class="text-center text-sm text-slate-500 mt-12">
+            <p>데이터 출처: 미국 노동 통계청(U.S. Bureau of Labor Statistics), Occupational Outlook Handbook (2023년 5월 데이터 기준).</p>
+            <p>본 정보는 교육 및 참고 목적으로 제공되며, 실제 연봉 및 직업 전망은 개인의 경력, 지역, 전문 분야에 따라 달라질 수 있습니다.</p>
+        </footer>
+
+    </div>
+
+    <div id="geminiResultModal" class="gemini-modal">
+        <div class="gemini-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-teal-800">✨ AI 커리어 플랜</h3>
+                <button id="closeModalBtn" class="text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            </div>
+            <div id="geminiResultOutput" class="text-slate-700 space-y-4 whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const nurseData = {
+                labels: ['실무 간호사 (LPN)', '등록 간호사 (ADN)', '등록 간호사 (BSN)', '전문 간호사 (MSN)', '실무 간호학 박사 (DNP)'],
+                salaries: [59730, 80000, 86070, 128490, 145000],
+                growthRates: [5, 6, 6, 38, 38],
+            };
+
+            const nationalData = {
+                labels: ['전문 간호사 (APRN)', '등록 간호사 (RN)', '실무 간호사 (LPN)', '미국 전체 직업 평균'],
+                growthRates: [38, 6, 5, 3]
+            };
+            
+            let mainChart;
+            const ctxMain = document.getElementById('mainComparisonChart').getContext('2d');
+            const salaryBtn = document.getElementById('showSalaryBtn');
+            const growthBtn = document.getElementById('showGrowthBtn');
+
+            const chartConfigBase = {
+                type: 'bar',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {}
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            };
+
+            function createChart(type) {
+                if (mainChart) {
+                    mainChart.destroy();
+                }
+
+                const config = JSON.parse(JSON.stringify(chartConfigBase));
+                
+                if (type === 'salary') {
+                    config.data = {
+                        labels: nurseData.labels,
+                        datasets: [{
+                            label: '연봉 중간값',
+                            data: nurseData.salaries,
+                            backgroundColor: 'rgba(15, 118, 110, 0.6)',
+                            borderColor: 'rgba(15, 118, 110, 1)',
+                            borderWidth: 1
+                        }]
+                    };
+                    config.options.scales.y.ticks.callback = function(value) {
+                        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value);
+                    };
+                    config.options.plugins.tooltip.callbacks.label = function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(context.parsed.y);
+                        }
+                        return label;
+                    };
+                } else { // growth
+                    config.data = {
+                        labels: nurseData.labels,
+                        datasets: [{
+                            label: '직업 성장률 전망 (2022-2032)',
+                            data: nurseData.growthRates,
+                            backgroundColor: 'rgba(217, 119, 6, 0.6)',
+                            borderColor: 'rgba(217, 119, 6, 1)',
+                            borderWidth: 1
+                        }]
+                    };
+                    config.options.scales.y.ticks.callback = function(value) {
+                        return value + '%';
+                    };
+                    config.options.plugins.tooltip.callbacks.label = function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += context.parsed.y + '%';
+                        }
+                        return label;
+                    };
+                }
+
+                mainChart = new Chart(ctxMain, config);
+            }
+
+            salaryBtn.addEventListener('click', () => {
+                createChart('salary');
+                salaryBtn.classList.add('btn-active');
+                salaryBtn.classList.remove('btn-inactive');
+                growthBtn.classList.add('btn-inactive');
+                growthBtn.classList.remove('btn-active');
+            });
+
+            growthBtn.addEventListener('click', () => {
+                createChart('growth');
+                growthBtn.classList.add('btn-active');
+                growthBtn.classList.remove('btn-inactive');
+                salaryBtn.classList.add('btn-inactive');
+                salaryBtn.classList.remove('btn-active');
+            });
+            
+            function createNationalComparisonChart() {
+                const ctxNational = document.getElementById('nationalComparisonChart').getContext('2d');
+                new Chart(ctxNational, {
+                    type: 'bar',
+                    data: {
+                        labels: nationalData.labels,
+                        datasets: [{
+                            label: '직업 성장률 전망 (2022-2032)',
+                            data: nationalData.growthRates,
+                            backgroundColor: [
+                                'rgba(217, 119, 6, 0.6)',
+                                'rgba(15, 118, 110, 0.6)',
+                                'rgba(71, 85, 105, 0.6)',
+                                'rgba(156, 163, 175, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(217, 119, 6, 1)',
+                                'rgba(15, 118, 110, 1)',
+                                'rgba(71, 85, 105, 1)',
+                                'rgba(156, 163, 175, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.x}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '성장률 (%)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createChart('salary');
+            createNationalComparisonChart();
+
+            // Gemini API Feature
+            const generatePlanBtn = document.getElementById('generatePlanBtn');
+            const modal = document.getElementById('geminiResultModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const resultOutput = document.getElementById('geminiResultOutput');
+            const currentRoleSelect = document.getElementById('currentRole');
+            const goalRoleSelect = document.getElementById('goalRole');
+
+            generatePlanBtn.addEventListener('click', async () => {
+                const currentRole = currentRoleSelect.value;
+                const goalRole = goalRoleSelect.value;
+                
+                modal.style.display = 'block';
+                resultOutput.innerHTML = '<div class="loader"></div>';
+
+                const prompt = `사용자는 현재 '${currentRole}'이며, 목표는 '${goalRole}'입니다. 이 목표를 달성하기 위한 현실적인 단계별 커리어 경로를 제안해주세요. 다음 항목을 포함하여 마일스톤 형식으로 목록을 작성해주세요: (1) 필요한 추가 학위 또는 자격증, (2) 추천하는 주요 임상 또는 리더십 경력, (3) 각 단계별 예상 소요 기간. 전문적이고 격려하는 톤으로 한국어로 작성해주세요. 각 마일스톤은 굵은 글씨로 시작하고, 설명은 줄 바꿈으로 구분해주세요.`;
+                
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API 요청 실패: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        resultOutput.innerText = text;
+                    } else {
+                        throw new Error("API로부터 유효한 응답을 받지 못했습니다.");
+                    }
+
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    resultOutput.innerText = `오류가 발생했습니다. 잠시 후 다시 시도해주세요. (${error.message})`;
+                }
+            });
+
+            closeModalBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
