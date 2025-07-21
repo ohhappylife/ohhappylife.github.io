@@ -89,6 +89,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        #generatePlanBtn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-700">
@@ -146,7 +150,7 @@
                 <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
                     <h3 class="font-bold text-xl text-teal-700 mb-2">실무 간호사 (LPN/LVN)</h3>
                     <p class="text-slate-600 flex-grow">등록 간호사(RN)나 의사의 감독 하에 기본적인 간호 업무를 수행합니다. 주요 업무에는 활력 징후 측정, 기본적인 약물 투여, 상처 드레싱 교체, 카테터 삽입, 환자의 개인 위생 및 편안함 제공, 환자 및 가족과의 건강 상담, 그리고 환자 상태를 상급 의료진에게 보고하는 역할이 포함됩니다. 주로 요양원, 장기 요양 시설 등에서 근무하며 안정적인 환자들의 일상적인 케어를 담당합니다.</p>
-                     <div class="mt-4 pt-4 border-t border-slate-200">
+                     <div class="mt-4 pt-4 border-t border-slate-200 space-y-1">
                         <p><strong class="text-slate-800">요구 학위:</strong> 자격증 과정 (약 1-2년)</p>
                         <p><strong class="text-slate-800">필수 시험:</strong> NCLEX-PN</p>
                     </div>
@@ -154,7 +158,7 @@
                 <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
                     <h3 class="font-bold text-xl text-teal-700 mb-2">등록 간호사 (RN)</h3>
                     <p class="text-slate-600 flex-grow">환자의 건강 상태를 종합적으로 평가하고, 개별화된 간호 계획을 수립 및 실행하는 의료팀의 핵심입니다. 의사의 처방에 따른 약물 및 치료를 시행하고, 정맥 주사 라인을 관리하며, 첨단 의료 장비를 운영 및 모니터링합니다. 또한, 진단 검사를 수행하고 결과를 분석하며, 환자와 그 가족에게 질병, 치료 과정, 건강 관리 방법에 대해 교육하는 중요한 역할을 합니다. 다른 의료 전문가들과 긴밀히 협력하여 환자에게 최적의 치료를 제공합니다.</p>
-                     <div class="mt-4 pt-4 border-t border-slate-200">
+                     <div class="mt-4 pt-4 border-t border-slate-200 space-y-1">
                         <p><strong class="text-slate-800">요구 학위:</strong> 학사(BSN) 또는 준학사(ADN)</p>
                         <p><strong class="text-slate-800">필수 시험:</strong> NCLEX-RN</p>
                     </div>
@@ -162,7 +166,7 @@
                 <div class="bg-white p-6 rounded-lg shadow-md flex flex-col">
                     <h3 class="font-bold text-xl text-teal-700 mb-2">전문 간호사 (APRN)</h3>
                     <p class="text-slate-600 flex-grow">의사와 유사한 수준의 높은 자율성을 가지고 독립적인 의료 서비스를 제공합니다. 환자를 진단하고, 약물을 처방하며, 치료 계획을 수립하고 관리합니다. 전문 분야에 따라 가정의학과, 정신건강, 소아과 등 특정 환자군을 대상으로 1차 의료를 제공하거나(NP), 수술 중 마취를 전담하고(CRNA), 여성의 생애주기 건강과 분만을 관리하는(CNM) 등 고도로 전문화된 역할을 수행합니다.</p>
-                    <div class="mt-4 pt-4 border-t border-slate-200">
+                    <div class="mt-4 pt-4 border-t border-slate-200 space-y-1">
                         <p><strong class="text-slate-800">요구 학위:</strong> 석사(MSN)</p>
                         <p><strong class="text-slate-800">필수 시험:</strong> 국가 전문 분야별 자격시험</p>
                     </div>
@@ -212,31 +216,43 @@
             <p class="mt-2 mb-6 text-teal-700 max-w-3xl mx-auto">
                 당신의 현재 위치와 미래의 목표를 선택하세요. Gemini AI가 당신만을 위한 맞춤형 커리어 성장 계획을 제안해 드립니다.
             </p>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center max-w-4xl mx-auto">
-                <div class="w-full">
-                    <label for="currentRole" class="block text-sm font-medium text-slate-700 mb-1">현재 학위/경력</label>
-                    <select id="currentRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
-                        <option value="고등학생">고등학생</option>
-                        <option value="실무 간호사 (LPN)">실무 간호사 (LPN)</option>
-                        <option value="등록 간호사 (ADN)">등록 간호사 (ADN)</option>
-                        <option value="등록 간호사 (BSN)">등록 간호사 (BSN)</option>
-                        <option value="전문 간호사 (MSN)">전문 간호사 (MSN)</option>
-                    </select>
+            
+            <div class="max-w-4xl mx-auto space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <label for="apiKey" class="block text-sm font-medium text-slate-700 mb-1">Gemini API 키 입력</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="password" id="apiKey" class="w-full p-2 border border-slate-300 rounded-md shadow-sm" placeholder="여기에 API 키를 입력하세요">
+                        <button id="saveApiKeyBtn" class="bg-slate-600 text-white font-bold py-2 px-4 rounded-md hover:bg-slate-700 transition-colors">저장</button>
+                    </div>
+                    <p id="apiKeyStatus" class="text-xs text-slate-500 mt-1"></p>
                 </div>
-                <div class="w-full">
-                    <label for="goalRole" class="block text-sm font-medium text-slate-700 mb-1">목표 직책</label>
-                    <select id="goalRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
-                        <option value="등록 간호사 (RN)">등록 간호사 (RN)</option>
-                        <option value="전문 간호사 (APRN)">전문 간호사 (APRN)</option>
-                        <option value="실무 간호학 박사 (DNP)">실무 간호학 박사 (DNP)</option>
-                        <option value="최고 간호 책임자 (CNO)">최고 간호 책임자 (CNO)</option>
-                        <option value="간호학 철학 박사 (PhD)">간호학 철학 박사 (PhD)</option>
-                    </select>
-                </div>
-                <div class="w-full mt-4 md:mt-0">
-                    <button id="generatePlanBtn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors duration-300 shadow-md">
-                        ✨ AI 커리어 플랜 생성
-                    </button>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div class="w-full">
+                        <label for="currentRole" class="block text-sm font-medium text-slate-700 mb-1">현재 학위/경력</label>
+                        <select id="currentRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            <option value="고등학생">고등학생</option>
+                            <option value="실무 간호사 (LPN)">실무 간호사 (LPN)</option>
+                            <option value="등록 간호사 (ADN)">등록 간호사 (ADN)</option>
+                            <option value="등록 간호사 (BSN)">등록 간호사 (BSN)</option>
+                            <option value="전문 간호사 (MSN)">전문 간호사 (MSN)</option>
+                        </select>
+                    </div>
+                    <div class="w-full">
+                        <label for="goalRole" class="block text-sm font-medium text-slate-700 mb-1">목표 직책</label>
+                        <select id="goalRole" class="w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            <option value="등록 간호사 (RN)">등록 간호사 (RN)</option>
+                            <option value="전문 간호사 (APRN)">전문 간호사 (APRN)</option>
+                            <option value="실무 간호학 박사 (DNP)">실무 간호학 박사 (DNP)</option>
+                            <option value="최고 간호 책임자 (CNO)">최고 간호 책임자 (CNO)</option>
+                            <option value="간호학 철학 박사 (PhD)">간호학 철학 박사 (PhD)</option>
+                        </select>
+                    </div>
+                    <div class="w-full">
+                        <button id="generatePlanBtn" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-md hover:bg-teal-700 transition-colors duration-300 shadow-md">
+                            ✨ AI 커리어 플랜 생성
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -499,8 +515,42 @@
             const resultOutput = document.getElementById('geminiResultOutput');
             const currentRoleSelect = document.getElementById('currentRole');
             const goalRoleSelect = document.getElementById('goalRole');
+            const apiKeyInput = document.getElementById('apiKey');
+            const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+            const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+            function checkApiKey() {
+                const savedKey = localStorage.getItem('geminiApiKey');
+                if (savedKey) {
+                    apiKeyStatus.textContent = 'API 키가 저장되었습니다. AI 플랜 생성이 가능합니다.';
+                    apiKeyStatus.style.color = 'green';
+                    generatePlanBtn.disabled = false;
+                } else {
+                    apiKeyStatus.textContent = 'AI 플랜을 생성하려면 Gemini API 키를 입력하고 저장해주세요.';
+                    apiKeyStatus.style.color = 'red';
+                    generatePlanBtn.disabled = true;
+                }
+            }
+
+            saveApiKeyBtn.addEventListener('click', () => {
+                const key = apiKeyInput.value.trim();
+                if (key) {
+                    localStorage.setItem('geminiApiKey', key);
+                    apiKeyInput.value = '';
+                    checkApiKey();
+                } else {
+                    apiKeyStatus.textContent = '유효한 API 키를 입력해주세요.';
+                    apiKeyStatus.style.color = 'red';
+                }
+            });
 
             generatePlanBtn.addEventListener('click', async () => {
+                const apiKey = localStorage.getItem('geminiApiKey');
+                if (!apiKey) {
+                    alert('Gemini API 키를 먼저 저장해주세요.');
+                    return;
+                }
+
                 const currentRole = currentRoleSelect.value;
                 const goalRole = goalRoleSelect.value;
                 
@@ -513,7 +563,6 @@
                     let chatHistory = [];
                     chatHistory.push({ role: "user", parts: [{ text: prompt }] });
                     const payload = { contents: chatHistory };
-                    const apiKey = "";
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
@@ -539,7 +588,7 @@
 
                 } catch (error) {
                     console.error("Gemini API Error:", error);
-                    resultOutput.innerText = `오류가 발생했습니다. 잠시 후 다시 시도해주세요. (${error.message})`;
+                    resultOutput.innerText = `오류가 발생했습니다. API 키가 올바른지 확인하거나 잠시 후 다시 시도해주세요. (${error.message})`;
                 }
             });
 
@@ -552,6 +601,8 @@
                     modal.style.display = 'none';
                 }
             });
+
+            checkApiKey();
         });
     </script>
 </body>
